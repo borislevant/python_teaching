@@ -1,5 +1,6 @@
 from sklearn.datasets import fetch_openml
 from tensorflow.keras.utils import to_categorical
+from tensorflow.keras.datasets import mnist
 from sklearn.preprocessing import OneHotEncoder, LabelEncoder
 import numpy as np
 from sklearn.model_selection import train_test_split
@@ -156,13 +157,14 @@ def load_mnist_data(filename='mnist_data.npz'):
 
 def preprocess_labels(y):
     y2 = LabelEncoder().fit_transform(y)
-    return OneHotEncoder().fit_transform(np.vstack([y, y2]).T)
+    return OneHotEncoder(sparse=False).fit_transform(np.vstack([y, y2]).T)
 
 if __name__ == '__main__':
     #x, y = load_mnist_data()
     #y = preprocess_labels(y)
 
     x, yy = fetch_openml('mnist_784', version=1, return_X_y=True)
+    yyy = preprocess_labels(yy)
     y = to_categorical(yy)
     np.savez('mnist_data.npz', x=x, yy=yy, y=y)
 
