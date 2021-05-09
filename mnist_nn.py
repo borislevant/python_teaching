@@ -151,29 +151,19 @@ class DeepNeuralNetwork():
                 iteration + 1, time.time() - start_time, accuracy * 100
             ))
 
-def load_mnist_data(filename='mnist_data.npz'):
-    data = np.load(filename, allow_pickle=True)
-    return data['x'], data['y']
-
-def preprocess_labels(y):
-    y2 = LabelEncoder().fit_transform(y)
-    return OneHotEncoder(sparse=False).fit_transform(np.vstack([y, y2]).T)
+def preprocess_labels(y_train, y_test):
+    encoder = OneHotEncoder(sparse=False).fit(y_train.reshape((-1, 1)))
+    return encoder.transform(y_train.reshape((-1, 1))), encoder.transform(y_test.reshape((-1, 1)))
 
 if __name__ == '__main__':
-    #x, y = load_mnist_data()
-    #y = preprocess_labels(y)
 
-    x, yy = fetch_openml('mnist_784', version=1, return_X_y=True)
-    yyy = preprocess_labels(yy)
-    y = to_categorical(yy)
-    np.savez('mnist_data.npz', x=x, yy=yy, y=y)
+    (x_train, y_train), (x_test, y_test) = mnist.load_data()
 
-    x = (x.to_numpy() / 255).astype('float32')
-    #x = (x / 255).astype('float32')
-
-    x_train, x_val, y_train, y_val = train_test_split(x, y, test_size=0.15, random_state=42)
+    y_train, y_test = preprocess_labels(y_train, y_test)
+    x_train = (x_train / 255).astype('float32')
+    x_test = (x_test / 255).astype('float32')
 
     dnn = DeepNeuralNetwork(sizes=[784, 128, 64, 10], epochs=5)
     for i in range(6):
-        dnn.train(x_train, y_train, x_val, y_val)
+        dnn.train(x_train, y_train, x_test, y_test)
         dnn.serialize(f'mnist_{5*(i+1)}epochs_relu.npz')
