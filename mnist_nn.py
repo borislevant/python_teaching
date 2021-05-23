@@ -1,9 +1,6 @@
-from sklearn.datasets import fetch_openml
-from tensorflow.keras.utils import to_categorical
-from tensorflow.keras.datasets import mnist
-from sklearn.preprocessing import OneHotEncoder, LabelEncoder
+from sklearn.preprocessing import OneHotEncoder
+import matplotlib.pyplot as plt
 import numpy as np
-from sklearn.model_selection import train_test_split
 import time
 
 class DeepNeuralNetwork():
@@ -157,13 +154,30 @@ def preprocess_labels(y_train, y_test):
 
 if __name__ == '__main__':
 
-    (x_train, y_train), (x_test, y_test) = mnist.load_data()
+    #(x_train, y_train), (x_test, y_test) = mnist.load_data()
+    mnist_dict = dict(np.load('mnist_local.npz'))
+    x_train = mnist_dict['x_train']
+    y_train = mnist_dict['y_train']
+    x_test = mnist_dict['x_test']
+    y_test = mnist_dict['y_test']
 
     y_train, y_test = preprocess_labels(y_train, y_test)
-    x_train = (x_train / 255).astype('float32')
-    x_test = (x_test / 255).astype('float32')
+    x_train = (x_train.reshape((x_train.shape[0], -1)) / 255).astype('float32')
+    x_test = (x_test.reshape((x_test.shape[0], -1)) / 255).astype('float32')
 
-    dnn = DeepNeuralNetwork(sizes=[784, 128, 64, 10], epochs=5)
-    for i in range(6):
-        dnn.train(x_train, y_train, x_test, y_test)
-        dnn.serialize(f'mnist_{5*(i+1)}epochs_relu.npz')
+    filename = 'mnist_15epochs_relu.npz'
+    dnn = DeepNeuralNetwork(sizes=[784, 128, 64, 10], epochs=15)
+    dnn.train(x_train, y_train, x_test, y_test)
+    dnn.serialize(filename)
+
+    acc = dnn.compute_accuracy(x_test, y_test)
+    fig = plt.figure(figsize=(10, 10))
+    fig.suptitle(f'Predictions: {filename}, Accuracy={acc}')
+    gs = fig.add_gridspec(5, 5, hspace=0.5, wspace=0.5)
+    ax = gs.subplots(sharex=True, sharey=True)
+    for nr in range(5):
+        for nc in range(5):
+            ax[nr, nc].imshow(x_test[nr + 5 * nc].reshape((28, 28)), cmap='gray')
+            prediction = np.argmax(dnn.forward_pass(x_test[nr + 5 * nc]))
+            ax[nr, nc].set_title(f'Prediction: {prediction}')
+    plt.show()
