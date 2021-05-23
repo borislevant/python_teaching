@@ -21,18 +21,13 @@ class DeepNeuralNetwork():
     def deserialize(self, filename):
         self.params = dict(np.load(filename, allow_pickle=True))
 
-    def relu(self, x, derivative=False):
-        if derivative:
-            return np.where(x > 0, 1, 0)
-        return np.where(x > 0, x, 0)
-
     def sigmoid(self, x, derivative=False):
         if derivative:
             return (np.exp(-x)) / ((np.exp(-x) + 1) ** 2)
         return 1 / (1 + np.exp(-x))
 
     def activation(self, x, derivative=False):
-        return self.relu(x, derivative)
+        return self.sigmoid(x, derivative)
 
     def softmax(self, x, derivative=False):
         # Numerically stable with large exponentials
@@ -165,7 +160,7 @@ if __name__ == '__main__':
     x_train = (x_train.reshape((x_train.shape[0], -1)) / 255).astype('float32')
     x_test = (x_test.reshape((x_test.shape[0], -1)) / 255).astype('float32')
 
-    filename = 'mnist_15epochs_relu.npz'
+    filename = 'mnist_15epochs_sigmoid.npz'
     dnn = DeepNeuralNetwork(sizes=[784, 128, 64, 10], epochs=15)
     dnn.train(x_train, y_train, x_test, y_test)
     dnn.serialize(filename)
